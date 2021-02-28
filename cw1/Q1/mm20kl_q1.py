@@ -10,8 +10,9 @@ import pandas as pd
 import os
 from config import *
 import seaborn as sns
+from torchvision.transforms import functional as TF
 
-def load_data():
+def load_train_data():
 # Gathers the meta data for the images
     paths, classes = [], []
     for i, dir_ in enumerate(CLASS_LABELS):
@@ -20,7 +21,8 @@ def load_data():
                 paths.append(entry.path)
                 classes.append(i)
             
-    data = {'path': paths,
+    data = {
+            'path': paths,
             'class': classes
             }
 
@@ -31,6 +33,9 @@ def load_data():
     train_split = 0.80 # Defines the ratio of train/valid data.
 
     train_size = int(len(data_df)*train_split)
+    
+    # define rotate
+    #lambd = lambda x: TF.rotate(x, 100)
 
     data_transform = transforms.Compose([
             transforms.Resize(128),
@@ -38,7 +43,8 @@ def load_data():
             transforms.ToTensor(),
             transforms.Normalize(NORM_MEAN, NORM_STD),
             transforms.RandomHorizontalFlip(p=0.5),
-        #transforms.ColorJitter(hue=0.2, saturation=0.2, brightness=0.2)
+            #transforms.Lambda(lambd)
+            #transforms.ColorJitter(hue=0.2, saturation=0.2, brightness=0.2)
             ])
 
     dataset_train = ImageNet10(
@@ -65,7 +71,12 @@ def load_data():
         num_workers=0
         )
 
-# load test set
+    
+    return train_loader, valid_loader
+
+
+def load_test_data():
+    # load test set
     paths_test = []
     for entry in os.scandir(ROOT_DIR_TEST):
         if (entry.is_file()):
@@ -93,7 +104,7 @@ def load_data():
         num_workers = 0
         )
     
-    return train_loader, valid_loader, test_loader, data_df_test
+    return test_loader, data_df_test
 
 
 #Another way
@@ -114,7 +125,6 @@ class MyNewNetwork(nn.Module):
                     nn.ReLU(), nn.Dropout(), nn.MaxPool2d(kernel_size = 2, stride = 2)) # (16,16) -> (8,8)
         
         self.classifier = nn.Sequential(nn.Linear(256*8*8, 256), nn.Dropout(), nn.BatchNorm1d(256), nn.ReLU(), 
-                                        #nn.Linear(256, 128), nn.Dropout(0.2), nn.BatchNorm1d(128),nn.ReLU(),
                                         nn.Linear(256, 64), nn.Dropout(), nn.BatchNorm1d(64), nn.ReLU(),
                         nn.Linear(64, num_classes))
         
@@ -249,16 +259,17 @@ def predict(model, loader, data_df_test):
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-if __name__ == "__main__":
-    train_loader, valid_loader, test_loader, data_df_test = load_data()
-    nepochs = 20
+if __name__ == '__main__':
+    train_loader, valid_loader = load_train_data()
+    test_loader, data_df_test = load_test_data()
+    nepochs = 50
     model = MyNewNetwork(10).to(device)
     loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr = 0.001)
     
-    statistics, trainedmodel, train_cm, valid_cm = train1(nepochs, model, train_loader, valid_loader, loss_fn, optimizer)
+    statistics, trainedmodel, train_cm, valid_cm = train(nepochs, model, train_loader, valid_loader, loss_fn, optimizer)
     
-    
+
     # Plot loss & accuracy
     fig, ax1 = plt.subplots()
     plt.plot(statistics[0], 'r', label = "training loss")
