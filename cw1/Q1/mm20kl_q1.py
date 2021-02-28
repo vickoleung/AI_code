@@ -84,7 +84,7 @@ def load_test_data():
         
     data_test = {'path':paths_test}
     data_df_test = pd.DataFrame(data_test, columns = ['path'])
-#data_df_test = data_df_test.sample(frac=1).reset_index(drop=True)
+    #data_df_test = data_df_test.sample(frac=1).reset_index(drop=True)
 
     data_transform_test = transforms.Compose([
         transforms.Resize(128),
@@ -189,7 +189,7 @@ def train(nepochs, model, train_loader, test_loader, loss_fn, optimizer):
             running_loss += loss.item()
             n += 1
             
-            #confusion matrix
+        #confusion matrix
         index, train_predict = torch.max(outputs.data, 1)
         for i in range(labels.size(0)):
             label = labels.data[i]
@@ -204,7 +204,7 @@ def train(nepochs, model, train_loader, test_loader, loss_fn, optimizer):
     return statsrec, model, train_cm, valid_cm
 
 
-def train1(nepochs, model, train_loader, test_loader, loss_fn, optimizer):
+def train_one_batch(nepochs, model, train_loader, test_loader, loss_fn, optimizer):
     statsrec = np.zeros((3,nepochs))
 
             
