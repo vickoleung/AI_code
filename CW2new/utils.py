@@ -101,6 +101,7 @@ def decode_caption(ref_captions, sampled_ids, vocab):
     Return:
         predicted_caption (str): predicted string sentence
     """
+    '''
     predicted_caption = " "
 
     list_sample_id = sampled_ids[0].cpu().numpy()
@@ -112,11 +113,29 @@ def decode_caption(ref_captions, sampled_ids, vocab):
             break
         word = vocab.idx2word[idx]
         sentence.append(word.strip('<>'))
+    '''
 
     # QUESTION 2.1
+    res = []
+    for sentence in sampled_ids:
+        sentences = []
+        for idx in sentence:
+            idx = list(idx.cpu().numpy())
+            for id in idx:
+                if id == 2:
+                    break
+                word = vocab.idx2word[id]
+                sentences.append(word.strip('<>'))
+        res.append(" ".join(sentences[1:]))
+
+    predicted_caption = res[::5]
 
 
-    return predicted_caption.join(sentence[1:])
+    return predicted_caption
+
+
+
+    #return predicted_caption.join(sentence[1:])
 
 
 """
@@ -154,4 +173,13 @@ def caption_collate_fn(data):
         targets[i, :end] = cap[:end]        
     return images, targets, lengths
 
+def Evaluation_bleu(ref_captions, predicted_captions):
+    scores = []
+    for i in range(1, len(predicted_captions)):
+        score = sentence_bleu(ref_captions[5*(i-1): 5*i],
+                              predicted_captions[i-1])
+        scores.append(score)
+    
+    average_score = sum(scores) / len(scores)
 
+    return average_score, scores

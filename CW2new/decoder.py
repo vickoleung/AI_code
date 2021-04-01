@@ -143,6 +143,29 @@ else:
 
     # TODO define decode_caption() function in utils.py
     # predicted_caption = decode_caption(word_ids, vocab)
+    dataset_test = Flickr8k_Images(
+        image_ids=test_image_ids,
+        transform=data_transform,
+    )
+
+    test_loader = torch.utils.data.DataLoader(
+        dataset_test,
+        batch_size=1,
+        shuffle=False,
+        num_workers=0,
+    )
+        
+    sample_ids = []
+
+    for data in test_loader:
+        image = data
+        image = image.to(device)
+        image_feature = encoder(image)
+        sample_id = decoder.sample(image_feature.squeeze(-1).squeeze(-1))
+        #predicted_caption = decode_caption(None, sample_id, vocab)
+        sample_ids.append(sample_id)
+
+    predicted_captions = decode_caption(None, sample_ids, vocab)
     
 
 #########################################################################
@@ -156,4 +179,7 @@ else:
     # documenting what they do in the code and in your report
 
 
+    # Compute BLEU score
+    avg_bleu_score, all_bleu_scores = Evaluation_bleu(test_cleaned_captions, predicted_captions)
+    
 

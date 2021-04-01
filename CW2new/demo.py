@@ -16,6 +16,7 @@ from torch.utils import data
 from torchvision import transforms
 from torch.nn.utils.rnn import pack_padded_sequence
 from PIL import Image
+from nltk.translate.bleu_score import sentence_bleu
 
 
 from datasets import Flickr8k_Images, Flickr8k_Features
@@ -144,7 +145,7 @@ else:
 
     # TODO define decode_caption() function in utils.py
     # predicted_caption = decode_caption(word_ids, vocab)
-    '''
+    
     dataset_test = Flickr8k_Images(
         image_ids=test_image_ids,
         transform=data_transform,
@@ -157,21 +158,20 @@ else:
         num_workers=0,
     )
 
-    it = iter(test_loader)
-    image = next(it)
+    #it = iter(test_loader)
+    #image = next(it)
     #ref_caption = test_cleaned_captions[0]
-    '''
-    image_path = IMAGE_DIR + str(test_image_ids[0]) + '.jpg'
-    img = Image.open(image_path)
-    img_tensor = data_transform(img).unsqueeze(0).to(device)
+    
+    sample_ids = []
 
-    img_feature = encoder(img_tensor)
-    sample_id = decoder.sample(img_feature)
-    #image = image.to(device)
-    #outputs = encoder(image)
-    #sample_id = decoder.sample(outputs.squeeze(-1).squeeze(-1))
-
-    print(decode_caption(sample_id, vocab))
+    for data in test_loader:
+        image = data
+        image = image.to(device)
+        image_feature = encoder(image)
+        sample_id = decoder.sample(image_feature.squeeze(-1).squeeze(-1))
+        sample_ids.append(sample_id)
+        
+    predicted_captions = decode_caption(None, sample_ids, vocab)
 
 
 #########################################################################
@@ -184,5 +184,7 @@ else:
     # Feel free to add helper functions to utils.py as needed,
     # documenting what they do in the code and in your report
 
+    #reference_cap_idx = list(np.arange(0, 5016, 5))
 
+    bleu_score, bleu_all_scores = Evaluation_bleu(test_cleaned_captions, predicted_captions)
 
