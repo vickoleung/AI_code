@@ -12,17 +12,20 @@ import numpy as np
 
 import torch.nn as nn
 from torch.nn.modules.loss import TripletMarginWithDistanceLoss
+from torch.nn.modules.pooling import AvgPool1d
 from torch.utils import data
 from torchvision import transforms
 from torch.nn.utils.rnn import pack_padded_sequence
 from PIL import Image
 from nltk.translate.bleu_score import sentence_bleu
+from sklearn.metrics.pairwise import cosine_similarity
 
 
 from datasets import Flickr8k_Images, Flickr8k_Features
 from models import DecoderRNN, EncoderCNN
 from utils import *
 from config import *
+
 
 # if false, train model; otherwise try loading model from checkpoint and evaluate
 #EVAL = False
@@ -187,4 +190,9 @@ else:
     #reference_cap_idx = list(np.arange(0, 5016, 5))
 
     bleu_score, bleu_all_scores = Evaluation_bleu(test_cleaned_captions, predicted_captions)
+    cos_score, cos_all_scores = COS_SIMILARITY(predicted_captions, test_cleaned_captions, vocab)
+    
+        
+    
+
 
