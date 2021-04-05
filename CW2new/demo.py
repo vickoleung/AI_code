@@ -160,10 +160,6 @@ else:
         shuffle=False,
         num_workers=0,
     )
-
-    #it = iter(test_loader)
-    #image = next(it)
-    #ref_caption = test_cleaned_captions[0]
     
     sample_ids = []
 

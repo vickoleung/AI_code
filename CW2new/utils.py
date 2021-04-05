@@ -104,19 +104,6 @@ def decode_caption(ref_captions, sampled_ids, vocab):
     Return:
         predicted_caption (str): predicted string sentence
     """
-    '''
-    predicted_caption = " "
-
-    list_sample_id = sampled_ids[0].cpu().numpy()
-
-    sentence = []
-
-    for idx in list_sample_id:
-        if idx == 2:
-            break
-        word = vocab.idx2word[idx]
-        sentence.append(word.strip('<>'))
-    '''
 
     # QUESTION 2.1
     res = []
@@ -196,9 +183,10 @@ class Ebd(nn.Module):
 
         return embedding
 
-def COS_SIMILARITY(predicted_captions, ref_captions, vocab):
+def COS_SIMILARITY(predicted_captions, test_ref_captions, vocab):
 
     embeds = nn.Embedding(len(vocab), EMBED_SIZE)
+
     all_avg_pre_vector = []
     for i in range(len(predicted_captions)):
         predict_vector = [] 
@@ -214,7 +202,7 @@ def COS_SIMILARITY(predicted_captions, ref_captions, vocab):
     all_five_sentence_avg_vector = []
     idx = list(np.arange(0, 5016, 5))
     for i in range(len(idx)-1):
-        ref_captions = ref_captions[idx[i]:idx[i+1]]
+        ref_captions = test_ref_captions[idx[i]:idx[i+1]]
         five_sentence_avg_vector = []
         for sentence in ref_captions:
             ref_vector = []
