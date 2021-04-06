@@ -187,4 +187,8 @@ else:
     cos_array = np.array(cos_all_scores)
     cos_array_1 = ( cos_array - np.min(cos_array) ) / (np.max(cos_array)-np.min(cos_array))
 
-
+    # Calculate the difference of bleu score and cosine similarity score
+    bleu_array = np.array(all_bleu_scores)
+    diff = sorted(cos_array_1 - bleu_array)
+    
+    
