@@ -160,12 +160,16 @@ def caption_collate_fn(data):
         targets[i, :end] = cap[:end]        
     return images, targets, lengths
 
+
+# Compute BLEU scores 
 def Evaluation_bleu(ref_captions, predicted_captions):
     scores = []
-    for i in range(1, len(predicted_captions)):
-        score = sentence_bleu(ref_captions[5*(i-1): 5*i],
-                              predicted_captions[i-1])
+    for i in range(len(predicted_captions)-1):
+        score = sentence_bleu(ref_captions[5*i: 5*(i+1)],
+                              predicted_captions[i])
         scores.append(score)
+    
+    scores.append(sentence_bleu(ref_captions[5*1002: 5*1003], predicted_captions[1002]))
     
     average_score = sum(scores) / len(scores)
 
@@ -183,6 +187,7 @@ class Ebd(nn.Module):
 
         return embedding
 
+# Compute cosine similarity of each pair of predicted caption and reference captions
 def COS_SIMILARITY(predicted_captions, test_ref_captions, vocab):
 
     embeds = nn.Embedding(len(vocab), EMBED_SIZE)

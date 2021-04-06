@@ -162,7 +162,6 @@ else:
         image = image.to(device)
         image_feature = encoder(image)
         sample_id = decoder.sample(image_feature.squeeze(-1).squeeze(-1))
-        #predicted_caption = decode_caption(None, sample_id, vocab)
         sample_ids.append(sample_id)
 
     predicted_captions = decode_caption(None, sample_ids, vocab)
@@ -181,5 +180,11 @@ else:
 
     # Compute BLEU score
     avg_bleu_score, all_bleu_scores = Evaluation_bleu(test_cleaned_captions, predicted_captions)
-    
+    # Compute cosinie similarity
+    cos_score, cos_all_scores = COS_SIMILARITY(predicted_captions, test_cleaned_captions, vocab)
+
+    # Rescale cosine similarity score(normalization)
+    cos_array = np.array(cos_all_scores)
+    cos_array_1 = ( cos_array - np.min(cos_array) ) / (np.max(cos_array)-np.min(cos_array))
+
 

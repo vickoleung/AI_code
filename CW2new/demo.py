@@ -31,7 +31,6 @@ from config import *
 #EVAL = False
 EVAL = True
 
-
 # reconstruct the captions and vocab, just as in extract_features.py
 lines = read_lines(TOKEN_FILE_TRAIN)
 image_ids, cleaned_captions = parse_lines(lines)
