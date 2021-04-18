@@ -44,7 +44,7 @@ def parse_lines(lines):
     cleaned_captions = []
 
     for line in lines:
-        ids, text = line.split('\t')
+        ids, text = line.split('\t') # split image id and caption
         ids = ids[:-6]
         text = text.strip(string.punctuation).lower()
         text = text.strip(' ')
@@ -73,7 +73,8 @@ def build_vocab(cleaned_captions):
     for sentence in cleaned_captions:
         for word in sentence.split():
             words[word] = words.get(word, 0) + 1
-    
+        
+    # Remove the words that appear less than or equal to three times
     words_1 = dict(filter(lambda item: item[1]>3, words.items()))
 
 
@@ -112,6 +113,7 @@ def decode_caption(ref_captions, sampled_ids, vocab):
         for idx in sentence:
             idx = list(idx.cpu().numpy())
             for id in idx:
+                # Quit the for loop when id=2(end)
                 if id == 2:
                     break
                 word = vocab.idx2word[id]
@@ -122,7 +124,6 @@ def decode_caption(ref_captions, sampled_ids, vocab):
 
 
     return predicted_caption
-    #return predicted_caption.join(sentence[1:])
 
 
 """
@@ -187,7 +188,8 @@ class Ebd(nn.Module):
 
         return embedding
 
-# Compute cosine similarity of each pair of predicted caption and reference captions
+# Compute cosine similarity of each pair of predicted caption
+# and reference captions
 def COS_SIMILARITY(predicted_captions, test_ref_captions, vocab):
 
     embeds = nn.Embedding(len(vocab), EMBED_SIZE)
@@ -196,14 +198,17 @@ def COS_SIMILARITY(predicted_captions, test_ref_captions, vocab):
     for i in range(len(predicted_captions)):
         predict_vector = [] 
         words = predicted_captions[i].split()
+        # find the embedding vector of each word
         for pword in words:
             t = vocab.__call__(pword)
             lookup_tensor = torch.tensor([t], dtype=torch.long)
             word_embed = embeds(lookup_tensor)
             predict_vector.append(word_embed.detach().numpy())
+        # compute the average vector for each caption
         avg_pre_vector = sum(predict_vector) / len(predict_vector)
         all_avg_pre_vector.append(avg_pre_vector)
 
+    # Compute average vector of each reference caption
     all_five_sentence_avg_vector = []
     idx = list(np.arange(0, 5016, 5))
     for i in range(len(idx)-1):
@@ -221,6 +226,8 @@ def COS_SIMILARITY(predicted_captions, test_ref_captions, vocab):
             five_sentence_avg_vector.append(avg_ref_vector)
         all_five_sentence_avg_vector.append(five_sentence_avg_vector)
 
+    # Compute the cosine score between the average vector of generated
+    # caption and average vector of each reference caption
     cos_score = []
     for i in range(1003):
         score = np.mean(cosine_similarity(np.array(all_avg_pre_vector[i]), np.array(all_five_sentence_avg_vector[i]).reshape(5, 256)))

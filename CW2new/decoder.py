@@ -157,6 +157,7 @@ else:
         
     sample_ids = []
 
+    # Put all sample ids in a list
     for data in test_loader:
         image = data
         image = image.to(device)
@@ -164,6 +165,7 @@ else:
         sample_id = decoder.sample(image_feature.squeeze(-1).squeeze(-1))
         sample_ids.append(sample_id)
 
+    # Generate predict captions
     predicted_captions = decode_caption(None, sample_ids, vocab)
     
 
