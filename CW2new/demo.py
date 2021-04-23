@@ -187,7 +187,19 @@ else:
     bleu_score, bleu_all_scores = Evaluation_bleu(test_cleaned_captions, predicted_captions)
     cos_score, cos_all_scores = COS_SIMILARITY(predicted_captions, test_cleaned_captions, vocab)
     
-        
+    '''
+        def similarity(caption, hypothesis, vocab, decoder):
+    cap_1 = [vocab(word) for word in caption.split(" ")]
+    hp_1 = [vocab(word) for word in hypothesis.split(" ")]
+    embed_cp = decoder.embed(torch.tensor(cap_1).long()).cpu().detach().clone().numpy()
+    embed_hp = decoder.embed(torch.tensor(hp_1).long()).cpu().detach().clone().numpy()
+    len_cap = embed_cp.shape[0]
+    len_hp = embed_hp.shape[0]
+    embed_cap_1 = np.sum(embed_cap, axis = 0).reshape(1,-1) / len_cap
+    embed_hp_1 = np.sum(embed_hp, axis = 0).reshape(1,-1) / len_hp
+    sim = cosine_similarity(embed_cap_1, embed_hp_1)[0][0]
+    return sim
+    '''
     
 
 

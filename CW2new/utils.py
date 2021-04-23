@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from collections import Counter
 import matplotlib.pyplot as plt
+from torch._C import device
 import torch.nn as nn
 
 from nltk.translate.bleu_score import sentence_bleu
@@ -118,9 +119,11 @@ def decode_caption(ref_captions, sampled_ids, vocab):
                     break
                 word = vocab.idx2word[id]
                 sentences.append(word.strip('<>'))
+        # Append sentence after <start>
         res.append(" ".join(sentences[1:]))
 
-    predicted_caption = res[::5]
+    predicted_caption = res
+    
 
 
     return predicted_caption
@@ -165,74 +168,17 @@ def caption_collate_fn(data):
 # Compute BLEU scores 
 def Evaluation_bleu(ref_captions, predicted_captions):
     scores = []
-    for i in range(len(predicted_captions)-1):
+    predict_caption_length = len(predicted_captions)
+    for i in range(predict_caption_length-1):
         score = sentence_bleu(ref_captions[5*i: 5*(i+1)],
                               predicted_captions[i])
         scores.append(score)
     
-    scores.append(sentence_bleu(ref_captions[5*1002: 5*1003], predicted_captions[1002]))
+    scores.append(sentence_bleu(
+                ref_captions[5*predict_caption_length-1: 5*predict_caption_length], 
+                predicted_captions[predict_caption_length-1]))
     
     average_score = sum(scores) / len(scores)
 
     return average_score, scores
 
-class Ebd(nn.Module):
-    def __init__(self, vocab_size, embedding_size):
-
-        super(Ebd, self).__init__()
-
-        self.embeddings = nn.Embedding(vocab_size, embedding_size)
-    
-    def forward(self, word):
-        embedding = self.embeddings(word)
-
-        return embedding
-
-# Compute cosine similarity of each pair of predicted caption
-# and reference captions
-def COS_SIMILARITY(predicted_captions, test_ref_captions, vocab):
-
-    embeds = nn.Embedding(len(vocab), EMBED_SIZE)
-
-    all_avg_pre_vector = []
-    for i in range(len(predicted_captions)):
-        predict_vector = [] 
-        words = predicted_captions[i].split()
-        # find the embedding vector of each word
-        for pword in words:
-            t = vocab.__call__(pword)
-            lookup_tensor = torch.tensor([t], dtype=torch.long)
-            word_embed = embeds(lookup_tensor)
-            predict_vector.append(word_embed.detach().numpy())
-        # compute the average vector for each caption
-        avg_pre_vector = sum(predict_vector) / len(predict_vector)
-        all_avg_pre_vector.append(avg_pre_vector)
-
-    # Compute average vector of each reference caption
-    all_five_sentence_avg_vector = []
-    idx = list(np.arange(0, 5016, 5))
-    for i in range(len(idx)-1):
-        ref_captions = test_ref_captions[idx[i]:idx[i+1]]
-        five_sentence_avg_vector = []
-        for sentence in ref_captions:
-            ref_vector = []
-            ref_words = sentence.split()
-            for word in ref_words:
-                t_ref = vocab.__call__(word)
-                lookup_tensor_1 = torch.tensor([t_ref], dtype = torch.long)
-                word_embed_1 = embeds(lookup_tensor_1)
-                ref_vector.append(word_embed_1.detach().numpy())
-            avg_ref_vector = sum(ref_vector) / len(ref_vector)
-            five_sentence_avg_vector.append(avg_ref_vector)
-        all_five_sentence_avg_vector.append(five_sentence_avg_vector)
-
-    # Compute the cosine score between the average vector of generated
-    # caption and average vector of each reference caption
-    cos_score = []
-    for i in range(1003):
-        score = np.mean(cosine_similarity(np.array(all_avg_pre_vector[i]), np.array(all_five_sentence_avg_vector[i]).reshape(5, 256)))
-        cos_score.append(score)
-    
-    average_cos_score = sum(cos_score) / len(cos_score)
-
-    return average_cos_score, cos_score

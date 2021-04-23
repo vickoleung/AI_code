@@ -37,9 +37,9 @@ image_ids, cleaned_captions = parse_lines(lines)
 # print(image_ids[:2])
 # print(cleaned_captions[:2])
 
-#vocab = build_vocab(cleaned_captions)
+vocab = build_vocab(cleaned_captions)
 # to check the results
-# print("Number of words in vocab:", vocab.idx)
+print("Number of words in vocab:", vocab.idx)
 
 # sample each image once
 image_ids = image_ids[::5]
@@ -90,7 +90,8 @@ with torch.no_grad():
 
 for i in range(len(features)):
     features[i] = features[i].squeeze()
-    
+
+# Concatenate all features vertically   
 features = torch.cat(features, dim=0)
 
 # to check your results, features should be dimensions [len(train_set), 2048]
