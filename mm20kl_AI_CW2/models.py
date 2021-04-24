@@ -46,10 +46,9 @@ class DecoderRNN(nn.Module):
 
         # QUESTION 1.3 DecoderRNN - define this layer 
         # TODO
-        # self.rnn = 
+        
         self.rnn = nn.LSTM(embed_size, hidden_size, num_layers, batch_first = True)
-
-
+        
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.max_seq_length = max_seq_length
         
@@ -83,3 +82,5 @@ class DecoderRNN(nn.Module):
             inputs = inputs.unsqueeze(1)                         # inputs: (batch_size, 1, embed_size)
         sampled_ids = torch.stack(sampled_ids, 1)                # sampled_ids: (batch_size, max_seq_length)
         return sampled_ids
+
+    
