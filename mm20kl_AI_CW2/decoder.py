@@ -7,6 +7,7 @@ python decoder.py
 
 """
 
+from math import cos
 import torch
 import numpy as np
 
@@ -24,7 +25,7 @@ from utils import *
 from config import *
 
 # if false, train model; otherwise try loading model from checkpoint and evaluate
-EVAL = False
+EVAL = True
 
 
 # reconstruct the captions and vocab, just as in extract_features.py
@@ -113,6 +114,7 @@ if not EVAL:
 
 # if we already trained, and EVAL == True, reload saved model
 else:
+    print("test begin")
 
     data_transform = transforms.Compose([ 
         transforms.Resize(224),     
@@ -157,7 +159,7 @@ else:
         
     sample_ids = []
 
-    # Put all sample ids in a list
+    # Generate sample ids
     for data in test_loader:
         image = data
         image = image.to(device)
@@ -165,9 +167,9 @@ else:
         sample_id = decoder.sample(image_feature.squeeze(-1).squeeze(-1))
         sample_ids.append(sample_id)
 
-    # Generate predict captions
-    predicted_captions = decode_caption(None, sample_ids, vocab)
     
+    predicted_captions = decode_caption(None, sample_ids, vocab)
+    predicted_captions_sampled = predicted_captions[::5]
 
 #########################################################################
 #
@@ -181,16 +183,39 @@ else:
 
 
     # Compute BLEU score
-    avg_bleu_score, all_bleu_scores = Evaluation_bleu(test_cleaned_captions, predicted_captions)
-    # Compute cosinie similarity
-    cos_score, cos_all_scores = COS_SIMILARITY(predicted_captions, test_cleaned_captions, vocab)
+    avg_bleu_score, all_bleu_scores = Evaluation_bleu(test_cleaned_captions, predicted_captions_sampled)
+    
+    # Compute cosinie similarity score
+    def Cos_similarity(reference, predict, vocab, decoder):
+        # Generate word id 
+        ref = [vocab(word) for word in reference.split(" ")]
+        pred = [vocab(word) for word in predict.split(" ")]
 
-    # Rescale cosine similarity score(normalization)
-    cos_array = np.array(cos_all_scores)
-    cos_array_1 = ( cos_array - np.min(cos_array) ) / (np.max(cos_array)-np.min(cos_array))
+        # Embedding refernce caption and predict caption
+        embedding_ref = decoder.embed(torch.tensor(ref).to(device).long()).cpu().detach().clone().numpy()
+        embedding_pred = decoder.embed(torch.tensor(pred).to(device).long()).cpu().detach().clone().numpy()
 
-    # Calculate the difference of bleu score and cosine similarity score
-    bleu_array = np.array(all_bleu_scores)
-    diff = sorted(cos_array_1 - bleu_array)
+        # Compute average vector 
+        ref_vector = np.sum(embedding_ref, axis = 0).reshape(1,-1)/embedding_ref.shape[0]
+        pred_vector = np.sum(embedding_pred, axis = 0).reshape(1,-1)/embedding_pred.shape[0]
+    
+        cos_score = cosine_similarity(ref_vector, pred_vector)[0][0]
+        return cos_score
+
+    cos_scores = []
+    for i in range(len(predicted_captions)):
+        reference = test_cleaned_captions[i]
+        predict_cap = predicted_captions[i]
+        score = Cos_similarity(reference, predict_cap ,vocab, decoder)
+        cos_scores.append(score)
+    average_cos_score = sum(cos_scores) / len(cos_scores) # Average cosine score
+    
+
+    # Rescale cosine similarity score
+    cos_array = np.array(cos_scores)
+    rescaled_cos_array = cos_array - np.min(cos_array) / ( np.max(cos_array) - np.min(cos_array) )
+    rescaled_average_score = np.mean(rescaled_cos_array)
+
+    
     
     
